@@ -1,0 +1,28 @@
+// Добавь это в конец script.js
+
+// Filter functions
+function applyFilters() {
+    const minSalary = document.getElementById('minSalary').value;
+    const hideEmpty = document.getElementById('hideEmpty').checked;
+    
+    const filters = {};
+    if (minSalary) filters.min_salary = parseInt(minSalary);
+    filters.hide_empty = hideEmpty;
+    
+    // Reload data with filters
+    loadData(filters);
+}
+
+function resetFilters() {
+    document.getElementById('minSalary').value = '';
+    document.getElementById('hideEmpty').checked = true;
+    
+    // Reload data without filters
+    loadData({});
+}
+
+function showFilterNotification(originalCount, filteredCount) {
+    const message = `Показано ${filteredCount} из ${originalCount} вакансий`;
+    showStatus(message);
+    setTimeout(hideStatus, 3000);
+}

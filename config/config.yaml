@@ -1,0 +1,35 @@
+# HH.ru API Configuration
+api:
+  base_url: "https://api.hh.ru"
+  user_agent: "HH-Parser/1.0"
+  timeout: 10
+  requests_per_second: 5  # Rate limiting
+
+# Search parameters
+search:
+  query: "руководитель отдела маркетинга"
+  area: 1  # Moscow (1), Saint Petersburg (2), Russia (113)
+  per_page: 20  # Items per page (100 causes 400 errors, use 20)
+  max_pages: 10  # Maximum pages to fetch
+  experience: null  # noExperience, between1And3, between3And6, moreThan6
+  employment: null  # full, part, project, volunteer, probation
+
+# Analysis settings
+analysis:
+  min_word_length: 3  # Minimum length for keywords
+  min_frequency: 2  # Minimum frequency to include in report
+  top_keywords: 50  # Number of top keywords to show
+  stop_words:
+    - "работа"
+    - "вакансия"
+    - "компания"
+    - "обязанности"
+    - "требования"
+    - "условия"
+    - "работы"
+    - "опыт"
+
+# Storage
+storage:
+  database: "data/vacancies.db"
+  export_dir: "data/exports"
