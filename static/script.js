@@ -1,10 +1,70 @@
 // HH.ru Parser - Dashboard JavaScript
+// Y2K Clinical Design System
 
 let keywordsChart, skillsChart, experienceChart;
 let currentData = null; // Store data for filtering
 
+// Theme management
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+}
+
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    
+    const toggleBtn = document.getElementById('themeToggle');
+    if (toggleBtn) {
+        toggleBtn.textContent = theme.toUpperCase();
+    }
+    
+    // Update chart colors based on theme
+    updateChartColors(theme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+}
+
+function updateChartColors(theme) {
+    const colors = theme === 'dark' 
+        ? { primary: '#00bcd4', secondary: '#333333', text: '#e0e0e0' }
+        : { primary: '#2a2a2a', secondary: '#d0d0d0', text: '#2a2a2a' };
+    
+    if (keywordsChart) {
+        keywordsChart.options.scales.x.ticks.color = colors.text;
+        keywordsChart.options.scales.y.ticks.color = colors.text;
+        keywordsChart.options.scales.x.grid.color = colors.secondary;
+        keywordsChart.options.scales.y.grid.color = colors.secondary;
+        keywordsChart.data.datasets[0].backgroundColor = colors.primary;
+        keywordsChart.update();
+    }
+    
+    if (skillsChart) {
+        skillsChart.options.scales.x.ticks.color = colors.text;
+        skillsChart.options.scales.y.ticks.color = colors.text;
+        skillsChart.options.scales.x.grid.color = colors.secondary;
+        skillsChart.options.scales.y.grid.color = colors.secondary;
+        skillsChart.data.datasets[0].backgroundColor = colors.primary;
+        skillsChart.update();
+    }
+    
+    if (experienceChart) {
+        experienceChart.options.scales.x.ticks.color = colors.text;
+        experienceChart.options.scales.y.ticks.color = colors.text;
+        experienceChart.options.scales.x.grid.color = colors.secondary;
+        experienceChart.options.scales.y.grid.color = colors.secondary;
+        experienceChart.data.datasets[0].backgroundColor = colors.primary;
+        experienceChart.update();
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     initCharts();
     loadData();
     setupEventListeners();
@@ -14,6 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupEventListeners() {
+    // Theme toggle
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+    
     document.getElementById('collectBtn').addEventListener('click', openModal);
     document.getElementById('refreshBtn').addEventListener('click', loadData);
     document.getElementById('exportJsonBtn').addEventListener('click', () => exportData('json'));
@@ -55,7 +119,11 @@ async function loadData(filters = {}) {
         // Build query params
         const params = new URLSearchParams();
         if (filters.min_salary) params.append('min_salary', filters.min_salary);
+        if (filters.max_salary) params.append('max_salary', filters.max_salary);
         if (filters.hide_empty !== undefined) params.append('hide_empty', filters.hide_empty);
+        if (filters.include_keywords) params.append('include_keywords', filters.include_keywords);
+        if (filters.exclude_keywords) params.append('exclude_keywords', filters.exclude_keywords);
+        if (filters.search_in) params.append('search_in', filters.search_in);
 
         const queryString = params.toString();
         const url = `/api/stats${queryString ? '?' + queryString : ''}`;
@@ -69,13 +137,16 @@ async function loadData(filters = {}) {
             updateCharts(data.report);
             await loadVacancies(filters);
 
-            // Show filter notification (temporarily disabled to prevent loop)
-            // if (data.filtered) {
-            //     showFilterNotification(data.original_count, data.total_vacancies);  
-            // }
+            // Show filter indicator if filtering is active
+            if (data.filtered && data.original_count !== data.total_vacancies) {
+                showFilterIndicator(data.original_count, data.total_vacancies);
+            } else {
+                hideFilterIndicator();
+            }
         } else {
             console.log('No data yet - database is empty');
             currentData = null;
+            hideFilterIndicator();
         }
     } catch (error) {
         console.error('Error loading data:', error);
@@ -136,8 +207,12 @@ function updateCharts(report) {
     // Experience chart
     if (report.experience_stats && Object.keys(report.experience_stats).length > 0) {
         const expData = Object.entries(report.experience_stats);
+        const theme = document.documentElement.getAttribute('data-theme') || 'light';
+        const expColor = theme === 'dark' ? '#00bcd4' : '#2a2a2a';
+        
         experienceChart.data.labels = expData.map(e => e[0]);
         experienceChart.data.datasets[0].data = expData.map(e => e[1]);
+        experienceChart.data.datasets[0].backgroundColor = expColor;
         experienceChart.update();
     }
 }
@@ -147,7 +222,11 @@ async function loadVacancies(filters = {}) {
         // Build query params
         const params = new URLSearchParams({ per_page: 10 });
         if (filters.min_salary) params.append('min_salary', filters.min_salary);
+        if (filters.max_salary) params.append('max_salary', filters.max_salary);
         if (filters.hide_empty !== undefined) params.append('hide_empty', filters.hide_empty);
+        if (filters.include_keywords) params.append('include_keywords', filters.include_keywords);
+        if (filters.exclude_keywords) params.append('exclude_keywords', filters.exclude_keywords);
+        if (filters.search_in) params.append('search_in', filters.search_in);
 
         const queryString = params.toString();
         const url = `/api/vacancies?${queryString}`;
@@ -169,7 +248,7 @@ async function loadVacancies(filters = {}) {
                     <td>${escapeHtml(vacancy.company_name || 'N/A')}</td>
                     <td>${salaryText}</td>
                     <td>${escapeHtml(vacancy.experience || 'N/A')}</td>
-                    <td><a href="${vacancy.url}" target="_blank" rel="noopener">Открыть</a></td>
+                    <td><a href="${vacancy.url}" target="_blank" rel="noopener">OPEN</a></td>
                 `;
 
                 tbody.appendChild(row);
@@ -372,12 +451,29 @@ function exportData(format) {
 }
 
 function initCharts() {
-    const chartColors = {
-        primary: 'rgb(99, 102, 241)',
-        secondary: 'rgb(139, 92, 246)',
-        success: 'rgb(16, 185, 129)',
-        info: 'rgb(14, 165, 233)',
-        warning: 'rgb(245, 158, 11)',
+    // Y2K Clinical theme colors
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    const colors = theme === 'dark' 
+        ? { primary: '#00bcd4', secondary: '#5c5c5c', text: '#e0e0e0', bg: '#222222' }
+        : { primary: '#2a2a2a', secondary: '#a0a0a0', text: '#2a2a2a', bg: '#ffffff' };
+
+    const chartDefaults = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            x: {
+                ticks: { color: colors.text, font: { family: "'JetBrains Mono', monospace", size: 9 } },
+                grid: { color: colors.secondary, lineWidth: 0.5 }
+            },
+            y: {
+                ticks: { color: colors.text, font: { family: "'JetBrains Mono', monospace", size: 9 } },
+                grid: { color: colors.secondary, lineWidth: 0.5 },
+                beginAtZero: true
+            }
+        }
     };
 
     // Keywords chart
@@ -387,22 +483,14 @@ function initCharts() {
         data: {
             labels: [],
             datasets: [{
-                label: 'Частота упоминаний',
+                label: 'FREQUENCY',
                 data: [],
-                backgroundColor: createGradient(keywordsCtx, chartColors.primary),
-                borderRadius: 8,
+                backgroundColor: colors.primary,
+                borderRadius: 0,
+                borderWidth: 0,
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: { beginAtZero: true }
-            }
-        }
+        options: { ...chartDefaults }
     });
 
     // Skills chart
@@ -412,75 +500,58 @@ function initCharts() {
         data: {
             labels: [],
             datasets: [{
-                label: 'Количество вакансий',
+                label: 'COUNT',
                 data: [],
-                backgroundColor: createGradient(skillsCtx, chartColors.success),
-                borderRadius: 8,
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: { beginAtZero: true }
-            }
-        }
-    });
-
-    // Experience chart
-    const expCtx = document.getElementById('experienceChart').getContext('2d');
-    experienceChart = new Chart(expCtx, {
-        type: 'doughnut',
-        data: {
-            labels: [],
-            datasets: [{
-                data: [],
-                backgroundColor: [
-                    chartColors.primary,
-                    chartColors.success,
-                    chartColors.warning,
-                    chartColors.info,
-                ],
+                backgroundColor: colors.primary,
+                borderRadius: 0,
                 borderWidth: 0,
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            ...chartDefaults,
+            indexAxis: 'y',
+        }
+    });
+
+    // Experience chart - using bar instead of doughnut for Y2K style
+    const expCtx = document.getElementById('experienceChart').getContext('2d');
+    
+    experienceChart = new Chart(expCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: colors.primary,
+                borderRadius: 0,
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            ...chartDefaults,
             plugins: {
                 legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 20,
-                        font: { size: 14 }
-                    }
+                    display: false
                 }
             }
         }
     });
 }
 
-function createGradient(ctx, color) {
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, color);
-    // Convert rgb(r,g,b) to rgba(r,g,b,0.5) for transparency
-    const rgbaColor = color.replace('rgb', 'rgba').replace(')', ', 0.5)');
-    gradient.addColorStop(1, rgbaColor);
-    return gradient;
-}
-
 // Filter functions
 function applyFilters() {
     const minSalary = document.getElementById('minSalary').value;
     const hideEmpty = document.getElementById('hideEmpty').checked;
+    const includeKeywords = document.getElementById('includeKeywords').value;
+    const excludeKeywords = document.getElementById('excludeKeywords').value;
+    const searchIn = document.getElementById('searchIn').value;
 
     const filters = {};
     if (minSalary) filters.min_salary = parseInt(minSalary);
     filters.hide_empty = hideEmpty;
+    if (includeKeywords.trim()) filters.include_keywords = includeKeywords.trim();
+    if (excludeKeywords.trim()) filters.exclude_keywords = excludeKeywords.trim();
+    if (searchIn) filters.search_in = searchIn;
 
     currentFilters = filters; // Store globally to persist through checkStatus
     loadData(filters);
@@ -489,6 +560,9 @@ function applyFilters() {
 function resetFilters() {
     document.getElementById('minSalary').value = '';
     document.getElementById('hideEmpty').checked = true;
+    document.getElementById('includeKeywords').value = '';
+    document.getElementById('excludeKeywords').value = '';
+    document.getElementById('searchIn').value = 'full_text';
 
     currentFilters = {}; // Clear global filters
     loadData({});
@@ -498,5 +572,24 @@ function showFilterNotification(originalCount, filteredCount) {
     const message = `Показано ${filteredCount} из ${originalCount} вакансий`;
     showStatus(message);
     setTimeout(hideStatus, 3000);
+}
+
+function showFilterIndicator(originalCount, filteredCount) {
+    const indicator = document.getElementById('filterIndicator');
+    const filteredEl = document.getElementById('filteredCount');
+    const originalEl = document.getElementById('originalCount');
+    
+    if (indicator && filteredEl && originalEl) {
+        filteredEl.textContent = filteredCount;
+        originalEl.textContent = originalCount;
+        indicator.classList.remove('hidden');
+    }
+}
+
+function hideFilterIndicator() {
+    const indicator = document.getElementById('filterIndicator');
+    if (indicator) {
+        indicator.classList.add('hidden');
+    }
 }
 

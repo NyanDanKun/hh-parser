@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HH.ru Parser - Dashboard</title>
+    <title>HH PARSER</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 
@@ -14,25 +15,20 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>📊 HH.ru Parser</h1>
-                <p class="subtitle">Анализ вакансий руководителей отдела маркетинга</p>
+                <div class="header-indicator"></div>
+                <h1>HH PARSER</h1>
             </div>
+            <button class="theme-toggle" id="themeToggle">LIGHT</button>
         </header>
 
         <!-- Project Selector -->
         <section class="project-selector">
             <div class="project-controls">
-                <label for="projectSelect">
-                    <span class="label-icon">📁</span>
-                    Текущий проект:
-                </label>
+                <label for="projectSelect">ПРОЕКТ:</label>
                 <select id="projectSelect" class="project-dropdown">
-                    <option value="1">Default Project (Loading...)</option>
+                    <option value="1">DEFAULT_PROJECT :: LOADING...</option>
                 </select>
-                <button id="deleteProjectBtn" class="btn btn-danger btn-sm">
-                    <span class="btn-icon">🗑️</span>
-                    Удалить
-                </button>
+                <button id="deleteProjectBtn" class="btn btn-danger btn-sm">DEL</button>
             </div>
         </section>
 
@@ -40,52 +36,51 @@
         <section class="filters-section">
             <div class="filters-controls">
                 <div class="filter-group">
-                    <label for="minSalary">
-                        <span class="label-icon">💰</span>
-                        Мин. зарплата:
-                    </label>
+                    <label for="minSalary">МИН_ЗАРПЛАТА:</label>
                     <input type="number" id="minSalary" class="filter-input" placeholder="100000" step="10000" min="0">
-                    <span class="filter-unit">₽</span>
                 </div>
 
                 <div class="filter-group">
                     <label class="checkbox-label">
                         <input type="checkbox" id="hideEmpty" checked>
-                        <span>Скрыть без зарплаты</span>
+                        <span>СКРЫТЬ БЕЗ ЗАРПЛАТЫ</span>
                     </label>
                 </div>
 
-                <button id="applyFilters" class="btn btn-secondary btn-sm">
-                    <span class="btn-icon">🔍</span>
-                    Применить
-                </button>
+                <div class="filter-group">
+                    <label for="includeKeywords">ВКЛЮЧИТЬ:</label>
+                    <input type="text" id="includeKeywords" class="filter-input filter-input-wide" 
+                           placeholder="Python, Excel">
+                </div>
 
-                <button id="resetFilters" class="btn btn-light btn-sm">
-                    <span class="btn-icon">↺</span>
-                    Сбросить
-                </button>
+                <div class="filter-group">
+                    <label for="excludeKeywords">ИСКЛЮЧИТЬ:</label>
+                    <input type="text" id="excludeKeywords" class="filter-input filter-input-wide" 
+                           placeholder="junior, intern">
+                </div>
+
+                <div class="filter-group">
+                    <label for="searchIn">ИСКАТЬ В:</label>
+                    <select id="searchIn" class="filter-input">
+                        <option value="full_text">ВСЁ</option>
+                        <option value="name">НАЗВАНИЕ</option>
+                        <option value="description">ОПИСАНИЕ</option>
+                        <option value="skills">НАВЫКИ</option>
+                    </select>
+                </div>
+
+                <button id="applyFilters" class="btn btn-primary btn-sm">APPLY</button>
+                <button id="resetFilters" class="btn btn-sm">RESET</button>
             </div>
         </section>
 
         <!-- Main Controls -->
         <section class="controls">
-            <button id="collectBtn" class="btn btn-primary">
-                <span class="btn-icon">⚙️</span>
-                Настройки и сбор
-            </button>
-            <button id="refreshBtn" class="btn btn-secondary">
-                <span class="btn-icon">🔄</span>
-                Обновить
-            </button>
+            <button id="collectBtn" class="btn btn-primary">COLLECT</button>
+            <button id="refreshBtn" class="btn">REFRESH</button>
             <div class="export-group">
-                <button id="exportJsonBtn" class="btn btn-export">
-                    <span class="btn-icon">📄</span>
-                    JSON
-                </button>
-                <button id="exportCsvBtn" class="btn btn-export">
-                    <span class="btn-icon">📊</span>
-                    CSV
-                </button>
+                <button id="exportJsonBtn" class="btn">EXPORT.JSON</button>
+                <button id="exportCsvBtn" class="btn">EXPORT.CSV</button>
             </div>
         </section>
 
@@ -93,62 +88,47 @@
         <div id="settingsModal" class="modal hidden">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>⚙️ Настройки поиска</h2>
+                    <h2>НАСТРОЙКИ СБОРА</h2>
                     <button class="modal-close" id="closeModal">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="searchQuery">
-                            <span class="label-icon">🔍</span>
-                            Название должности
-                        </label>
+                        <label for="searchQuery">ЗАПРОС:</label>
                         <input type="text" id="searchQuery" class="form-input" value="руководитель отдела маркетинга"
-                            placeholder="Например: маркетолог, SMM менеджер">
+                            placeholder="Название вакансии...">
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="searchArea">
-                                <span class="label-icon">📍</span>
-                                Регион
-                            </label>
+                            <label for="searchArea">РЕГИОН:</label>
                             <select id="searchArea" class="form-input">
-                                <option value="1">Москва</option>
-                                <option value="2">Санкт-Петербург</option>
-                                <option value="113">Вся Россия</option>
-                                <option value="">Весь мир</option>
+                                <option value="1">МОСКВА</option>
+                                <option value="2">СПБ</option>
+                                <option value="113">РОССИЯ</option>
+                                <option value="">ВЕСЬ МИР</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <label for="searchExperience">
-                                <span class="label-icon">📈</span>
-                                Опыт работы
-                            </label>
+                            <label for="searchExperience">ОПЫТ:</label>
                             <select id="searchExperience" class="form-input">
-                                <option value="">Не важно</option>
-                                <option value="noExperience">Нет опыта</option>
-                                <option value="between1And3">От 1 до 3 лет</option>
-                                <option value="between3And6">От 3 до 6 лет</option>
-                                <option value="moreThan6">Более 6 лет</option>
+                                <option value="">ЛЮБОЙ</option>
+                                <option value="noExperience">БЕЗ ОПЫТА</option>
+                                <option value="between1And3">1-3 ГОДА</option>
+                                <option value="between3And6">3-6 ЛЕТ</option>
+                                <option value="moreThan6">6+ ЛЕТ</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="searchPages">
-                                <span class="label-icon">📄</span>
-                                Страниц для сбора
-                            </label>
+                            <label for="searchPages">СТРАНИЦ:</label>
                             <input type="number" id="searchPages" class="form-input" value="10" min="1" max="50">
                         </div>
 
                         <div class="form-group">
-                            <label for="searchPerPage">
-                                <span class="label-icon">📊</span>
-                                Вакансий на страницу
-                            </label>
+                            <label for="searchPerPage">НА СТРАНИЦЕ:</label>
                             <select id="searchPerPage" class="form-input">
                                 <option value="20" selected>20</option>
                                 <option value="50">50</option>
@@ -160,22 +140,19 @@
                     <div class="form-group">
                         <label class="checkbox-label">
                             <input type="checkbox" id="createNewProject">
-                            <span>Создать новый проект</span>
+                            <span>СОЗДАТЬ НОВЫЙ ПРОЕКТ</span>
                         </label>
-                        <input type="text" id="projectName" class="form-input" placeholder="Название проекта"
-                            style="display: none; margin-top: 0.5rem;">
+                        <input type="text" id="projectName" class="form-input" placeholder="Название проекта..."
+                            style="display: none; margin-top: 8px;">
                     </div>
 
                     <div class="stats-preview">
-                        <p>📥 Будет собрано: <strong id="estimatedTotal">200</strong> вакансий</p>
+                        ОЖИДАЕТСЯ: <strong id="estimatedTotal">200</strong> ВАКАНСИЙ
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button id="cancelBtn" class="btn btn-secondary">Отмена</button>
-                    <button id="startCollectBtn" class="btn btn-primary">
-                        <span class="btn-icon">🚀</span>
-                        Начать сбор
-                    </button>
+                    <button id="cancelBtn" class="btn">CANCEL</button>
+                    <button id="startCollectBtn" class="btn btn-primary">START</button>
                 </div>
             </div>
         </div>
@@ -184,41 +161,46 @@
         <div id="statusBar" class="status-bar hidden">
             <div class="status-content">
                 <div class="status-spinner"></div>
-                <span id="statusMessage">Загрузка...</span>
+                <span id="statusMessage">PROCESSING...</span>
             </div>
             <div id="progressBar" class="progress-bar">
                 <div id="progressFill" class="progress-fill"></div>
             </div>
         </div>
 
+        <!-- Filter Indicator -->
+        <div id="filterIndicator" class="filter-indicator hidden">
+            <span>ФИЛЬТР: <strong id="filteredCount">0</strong> / <strong id="originalCount">0</strong></span>
+        </div>
+
         <!-- Stats Cards -->
         <section class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon">📋</div>
+                <div class="stat-icon">[]</div>
                 <div class="stat-content">
                     <h3 id="totalVacancies">0</h3>
-                    <p>Всего вакансий</p>
+                    <p>ВСЕГО ВАКАНСИЙ</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">💰</div>
+                <div class="stat-icon">$</div>
                 <div class="stat-content">
                     <h3 id="avgSalary">-</h3>
-                    <p>Средняя зарплата</p>
+                    <p>СРЕДНЯЯ ЗАРПЛАТА</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">🎯</div>
+                <div class="stat-icon">#</div>
                 <div class="stat-content">
                     <h3 id="topSkills">-</h3>
-                    <p>Топ навык</p>
+                    <p>ТОП НАВЫК</p>
                 </div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">📈</div>
+                <div class="stat-icon">%</div>
                 <div class="stat-content">
                     <h3 id="withSalary">0%</h3>
-                    <p>С указанной з/п</p>
+                    <p>С ЗАРПЛАТОЙ</p>
                 </div>
             </div>
         </section>
@@ -226,11 +208,11 @@
         <!-- Charts Section -->
         <section class="charts-section">
             <div class="chart-container">
-                <h2>🔑 Топ-20 ключевых слов</h2>
+                <h2>ТОП КЛЮЧЕВЫЕ СЛОВА</h2>
                 <canvas id="keywordsChart"></canvas>
             </div>
             <div class="chart-container">
-                <h2>💼 Топ-15 навыков</h2>
+                <h2>ТОП НАВЫКИ</h2>
                 <canvas id="skillsChart"></canvas>
             </div>
         </section>
@@ -238,28 +220,28 @@
         <!-- Experience Chart -->
         <section class="chart-full">
             <div class="chart-container">
-                <h2>📊 Требования по опыту</h2>
+                <h2>РАСПРЕДЕЛЕНИЕ ПО ОПЫТУ</h2>
                 <canvas id="experienceChart"></canvas>
             </div>
         </section>
 
         <!-- Vacancies Table -->
         <section class="table-section">
-            <h2>📄 Последние вакансии</h2>
+            <h2>ПОСЛЕДНИЕ ВАКАНСИИ</h2>
             <div class="table-container">
                 <table id="vacanciesTable">
                     <thead>
                         <tr>
-                            <th>Название</th>
-                            <th>Компания</th>
-                            <th>Зарплата</th>
-                            <th>Опыт</th>
-                            <th>Ссылка</th>
+                            <th>НАЗВАНИЕ</th>
+                            <th>КОМПАНИЯ</th>
+                            <th>ЗАРПЛАТА</th>
+                            <th>ОПЫТ</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="vacanciesBody">
                         <tr>
-                            <td colspan="5" class="no-data">Нет данных. Запустите сбор вакансий.</td>
+                            <td colspan="5" class="no-data">НЕТ ДАННЫХ :: ЗАПУСТИТЕ СБОР</td>
                         </tr>
                     </tbody>
                 </table>
@@ -268,11 +250,11 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <p>HH.ru Parser © 2026</p>
+            <span></span>
+            <span>v1.0.0</span>
         </footer>
     </div>
 
-    <script src="{{ url_for('static', filename='filters.js') }}"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 
